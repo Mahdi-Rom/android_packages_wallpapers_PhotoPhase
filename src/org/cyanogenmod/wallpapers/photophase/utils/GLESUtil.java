@@ -42,7 +42,11 @@ public final class GLESUtil {
 
     private static final boolean DEBUG = false;
 
-    private static final Object sSync = new Object();
+    public static final boolean DEBUG_GL_MEMOBJS = false;
+    public static final String DEBUG_GL_MEMOBJS_NEW_TAG = "MEMOBJS_NEW";
+    public static final String DEBUG_GL_MEMOBJS_DEL_TAG = "MEMOBJS_DEL";
+
+    private static final Object SYNC = new Object();
 
     /**
      * A helper class to deal with OpenGL float colors.
@@ -207,6 +211,9 @@ public final class GLESUtil {
         int[] compiled = new int[1];
         // Create, load and compile the shader
         int shader = GLES20.glCreateShader(type);
+        if (GLESUtil.DEBUG_GL_MEMOBJS) {
+            Log.d(GLESUtil.DEBUG_GL_MEMOBJS_NEW_TAG, "glCreateShader (" + type + "): " + shader);
+        }
         GLESUtil.glesCheckError("glCreateShader");
         if (shader <= 0) {
             Log.e(TAG, "Cannot create a shader");
@@ -265,6 +272,9 @@ public final class GLESUtil {
 
             // Create the programa ref
             progid = GLES20.glCreateProgram();
+            if (GLESUtil.DEBUG_GL_MEMOBJS) {
+                Log.d(GLESUtil.DEBUG_GL_MEMOBJS_NEW_TAG, "glCreateProgram: " + progid);
+            }
             GLESUtil.glesCheckError("glCreateProgram");
             if (progid <= 0) {
                 String msg = "Cannot create a program";
@@ -296,10 +306,16 @@ public final class GLESUtil {
         } finally {
             // Delete the shaders
             if (vshader != 0) {
+                if (GLESUtil.DEBUG_GL_MEMOBJS) {
+                    Log.d(GLESUtil.DEBUG_GL_MEMOBJS_DEL_TAG, "glDeleteShader (v): " + vshader);
+                }
                 GLES20.glDeleteShader(vshader);
                 GLESUtil.glesCheckError("glDeleteShader");
             }
             if (fshader != 0) {
+                if (GLESUtil.DEBUG_GL_MEMOBJS) {
+                    Log.d(GLESUtil.DEBUG_GL_MEMOBJS_DEL_TAG, "glDeleteShader (f): " + fshader);
+                }
                 GLES20.glDeleteShader(fshader);
                 GLESUtil.glesCheckError("glDeleteShader");
             }
@@ -316,8 +332,8 @@ public final class GLESUtil {
      * @param recycle If the bitmap should be recycled
      * @return GLESTextureInfo The texture info
      */
-    public static GLESTextureInfo loadTexture(
-            File file, Rect dimensions, Effect effect, Rect dimen, boolean recycle) {
+    public static GLESTextureInfo loadTexture(File file, Rect dimensions, Effect effect,
+            Rect dimen, boolean recycle) {
         Bitmap bitmap = null;
         try {
             // Decode and associate the bitmap (invert the desired dimensions)
@@ -356,8 +372,8 @@ public final class GLESUtil {
      * @param recycle If the bitmap should be recycled
      * @return GLESTextureInfo The texture info
      */
-    public static GLESTextureInfo loadTexture(
-            Context ctx, int resourceId, Effect effect, Rect dimen, boolean recycle) {
+    public static GLESTextureInfo loadTexture(Context ctx, int resourceId, Effect effect,
+            Rect dimen, boolean recycle) {
         Bitmap bitmap = null;
         InputStream raw = null;
         try {
@@ -415,6 +431,11 @@ public final class GLESUtil {
         int[] textureHandles = new int[num];
         GLES20.glGenTextures(num, textureHandles, 0);
         GLESUtil.glesCheckError("glGenTextures");
+        for (int i = 0; i < num; i++) {
+            if (GLESUtil.DEBUG_GL_MEMOBJS) {
+                Log.d(GLESUtil.DEBUG_GL_MEMOBJS_NEW_TAG, "glGenTextures: " + textureHandles[i]);
+            }
+        }
         if (textureHandles[0] <= 0 || (effect != null && textureHandles[1] <= 0)) {
             Log.e(TAG, "Failed to generate a valid texture");
             return new GLESTextureInfo();
@@ -445,7 +466,7 @@ public final class GLESUtil {
         int handle = textureHandles[0];
         if (effect != null) {
             // Apply the effect (we need a thread-safe call here)
-            synchronized (sSync) {
+            synchronized (SYNC) {
                 // No more than 1024 (the minimum supported by all the gles20 devices)
                 int w = Math.min(dimen.width(), 1024);
                 int h = Math.min(dimen.width(), 1024);
@@ -455,6 +476,10 @@ public final class GLESUtil {
 
             // Delete the unused texture
             int[] textures = {textureHandles[0]};
+            if (GLESUtil.DEBUG_GL_MEMOBJS) {
+                Log.d(GLESUtil.DEBUG_GL_MEMOBJS_DEL_TAG, "glDeleteTextures: ["
+                        + textureHandles[0] + "]");
+            }
             GLES20.glDeleteTextures(1, textures, 0);
             GLESUtil.glesCheckError("glDeleteTextures");
         }

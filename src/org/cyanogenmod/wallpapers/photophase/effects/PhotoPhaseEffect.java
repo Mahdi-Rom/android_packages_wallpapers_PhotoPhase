@@ -21,6 +21,7 @@ import android.media.effect.EffectContext;
 import android.media.effect.EffectFactory;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
+import android.util.Log;
 
 import org.cyanogenmod.wallpapers.photophase.utils.GLESUtil;
 
@@ -138,11 +139,14 @@ public abstract class PhotoPhaseEffect extends Effect {
         // Save the GLES state
         saveGLState();
 
+        int[] fb = new int[1];
         try {
             // Create a framebuffer object and call the effect apply method to draw the effect
-            int[] fb = new int[1];
             GLES20.glGenFramebuffers(1, fb, 0);
             GLESUtil.glesCheckError("glGenFramebuffers");
+            if (GLESUtil.DEBUG_GL_MEMOBJS) {
+                Log.d(GLESUtil.DEBUG_GL_MEMOBJS_NEW_TAG, "glGenFramebuffers: " + fb[0]);
+            }
             GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fb[0]);
             GLESUtil.glesCheckError("glBindFramebuffer");
 
@@ -154,12 +158,14 @@ public abstract class PhotoPhaseEffect extends Effect {
             mIdentityEffect.apply(inputTexId, width, height, outputTexId);
 
             // Create the framebuffer
-            GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0, GLES20. GL_TEXTURE_2D, outputTexId, 0);
+            GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0,
+                    GLES20. GL_TEXTURE_2D, outputTexId, 0);
             GLESUtil.glesCheckError("glFramebufferTexture2D");
 
             // Check if the buffer was built successfully
-            if (GLES20.glCheckFramebufferStatus(GLES20.GL_FRAMEBUFFER) != GLES20.GL_FRAMEBUFFER_COMPLETE) {
-                // Something when wrong. Throw an exception
+            final int status = GLES20.glCheckFramebufferStatus(GLES20.GL_FRAMEBUFFER);
+            if (status != GLES20.GL_FRAMEBUFFER_COMPLETE) {
+                // Something was wrong. Throw an exception
                 GLESUtil.glesCheckError("glCheckFramebufferStatus");
                 int error = GLES20.glGetError();
                 throw new android.opengl.GLException(error, GLUtils.getEGLErrorString(error));
@@ -171,6 +177,13 @@ public abstract class PhotoPhaseEffect extends Effect {
         } finally {
             // Restore the GLES state
             restoreGLState();
+
+            // Clean framebuffer memory
+            if (GLESUtil.DEBUG_GL_MEMOBJS) {
+                Log.d(GLESUtil.DEBUG_GL_MEMOBJS_DEL_TAG, "glDeleteFramebuffers: " + fb[0]);
+            }
+            GLES20.glDeleteFramebuffers(1, fb, 0);
+            GLESUtil.glesCheckError("glDeleteFramebuffers");
         }
 
     }
@@ -189,6 +202,9 @@ public abstract class PhotoPhaseEffect extends Effect {
     @Override
     public void release() {
         if (GLES20.glIsProgram(mProgram)) {
+            if (GLESUtil.DEBUG_GL_MEMOBJS) {
+                Log.d(GLESUtil.DEBUG_GL_MEMOBJS_DEL_TAG, "glDeleteProgram: " + mProgram);
+            }
             GLES20.glDeleteProgram(mProgram);
             GLESUtil.glesCheckError("glDeleteProgram");
         }

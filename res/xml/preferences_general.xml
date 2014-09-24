@@ -25,7 +25,6 @@
         <org.cyanogenmod.wallpapers.photophase.preferences.SeekBarProgressPreference
             android:key="ui_wallpaper_dim"
             android:title="@string/pref_general_settings_wallpaper_dim"
-            android:summary="@string/pref_general_settings_wallpaper_dim_summary"
             android:persistent="true"
             android:defaultValue="0" />
 
@@ -41,7 +40,6 @@
         <ListPreference
             android:key="ui_touch_action"
             android:title="@string/pref_general_touch_action"
-            android:summary="@string/pref_general_touch_action_summary"
             android:persistent="true"
             android:entries="@array/touch_actions_labels"
             android:entryValues="@array/touch_actions_values"
@@ -66,7 +64,6 @@
         <MultiSelectListPreference
             android:key="ui_transition_types"
             android:title="@string/pref_general_transitions_types"
-            android:summary="@string/pref_general_transitions_types_summary"
             android:persistent="true"
             android:entries="@array/transitions_labels"
             android:entryValues="@array/transitions_values"
@@ -76,7 +73,6 @@
         <org.cyanogenmod.wallpapers.photophase.preferences.SeekBarProgressPreference
             android:key="ui_transition_interval"
             android:title="@string/pref_general_transitions_interval"
-            android:summary="@string/pref_general_transitions_interval_summary"
             android:persistent="true"
             android:defaultValue="2" />
 
@@ -91,7 +87,6 @@
         <MultiSelectListPreference
             android:key="ui_effect_types"
             android:title="@string/pref_general_effects_types"
-            android:summary="@string/pref_general_effects_types_summary"
             android:persistent="true"
             android:entries="@array/effects_labels"
             android:entryValues="@array/effects_values"

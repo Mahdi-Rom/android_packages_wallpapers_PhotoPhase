@@ -89,6 +89,11 @@ public class TextureManager implements OnMediaPictureDiscoveredListener {
                     effect = mEffects.getNextEffect();
                 }
 
+                boolean enqueue = false;
+                synchronized (mSync) {
+                    enqueue = mPendingRequests.size() == 0;
+                }
+
                 // Load and bind to the GLES context. The effect is applied when the image
                 // is associated to the destination target (only if aspect ratio will be applied)
                 if (!Preferences.General.isFixAspectRatio()) {
@@ -101,7 +106,7 @@ public class TextureManager implements OnMediaPictureDiscoveredListener {
 
                 synchronized (mSync) {
                     // Notify the new images to all pending frames
-                    if (mPendingRequests.size() > 0) {
+                    if (!enqueue) {
                         // Invalid textures are also reported, so requestor can handle it
                         TextureRequestor requestor = mPendingRequests.remove(0);
                         fixAspectRatio(requestor, ti);
@@ -281,6 +286,10 @@ public class TextureManager implements OnMediaPictureDiscoveredListener {
                 for (GLESTextureInfo info : all) {
                     if (GLES20.glIsTexture(info.handle)) {
                         int[] textures = new int[] {info.handle};
+                        if (GLESUtil.DEBUG_GL_MEMOBJS) {
+                            Log.d(GLESUtil.DEBUG_GL_MEMOBJS_DEL_TAG, "glDeleteTextures: ["
+                                    + info.handle + "]");
+                        }
                         GLES20.glDeleteTextures(1, textures, 0);
                         GLESUtil.glesCheckError("glDeleteTextures");
                     }
@@ -449,6 +458,10 @@ public class TextureManager implements OnMediaPictureDiscoveredListener {
 
             // Destroy references
             int[] textures = new int[]{ti.handle};
+            if (GLESUtil.DEBUG_GL_MEMOBJS) {
+                Log.d(GLESUtil.DEBUG_GL_MEMOBJS_DEL_TAG, "glDeleteTextures: ["
+                        + ti.handle + "]");
+            }
             GLES20.glDeleteTextures(1, textures, 0);
             GLESUtil.glesCheckError("glDeleteTextures");
             if (ti.bitmap != null) {
